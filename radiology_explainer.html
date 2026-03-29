@@ -316,7 +316,7 @@
 
 <script>
 /* ── CONFIG ── */
-let C = { seg:'', label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it' };
+let C = { seg:'http://localhost:5000/segment', label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it' };
 
 function loadCfg() {
   try { const s = localStorage.getItem('rv2'); if (s) C = {...C, ...JSON.parse(s)}; } catch(e) {}
@@ -478,7 +478,7 @@ async function runSeg() {
 
   ST.hasMask = true;
   refreshLegend();
-  switchView('over');
+  switchView('mask');
   setSt('ok', `Segmentation complete — ${C.label} mask applied`);
   document.getElementById('bSeg').disabled = false;
 }
@@ -502,12 +502,11 @@ function recolor() {
   const W = co.width, H = co.height;
   const [r,g,b] = C.color.split(',').map(Number);
 
-  // Mask view: original image tinted over segmented pixels
+  // Mask view: raw black/white mask as received from the API
   const cm = document.getElementById('cMask');
   cm.width=W; cm.height=H;
   const mctx = cm.getContext('2d');
-  mctx.drawImage(co, 0, 0);
-  const md = mctx.getImageData(0,0,W,H);
+  mctx.putImageData(pix, 0, 0);
 
   // Overlay: transparent canvas with colored mask
   const cv = document.getElementById('cOver');
@@ -518,15 +517,9 @@ function recolor() {
   for (let i=0; i<pix.data.length; i+=4) {
     const bright = (pix.data[i]+pix.data[i+1]+pix.data[i+2])/3;
     if (bright > 128) {
-      // Tinted mask view
-      md.data[i]   = Math.min(255, md.data[i]   * 0.25 + r * 0.75);
-      md.data[i+1] = Math.min(255, md.data[i+1] * 0.25 + g * 0.75);
-      md.data[i+2] = Math.min(255, md.data[i+2] * 0.25 + b * 0.75);
-      // Overlay alpha fill
       vd.data[i]=r; vd.data[i+1]=g; vd.data[i+2]=b; vd.data[i+3]=185;
     }
   }
-  mctx.putImageData(md,0,0);
   vctx.putImageData(vd,0,0);
   // Update legend
   document.getElementById('legDot').style.background = `rgba(${C.color},.75)`;

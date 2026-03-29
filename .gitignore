@@ -9,7 +9,9 @@ secrets.py
 *.key
 *.p12
 *.pfx
-
+.claude
+models/
+myenv/
 # Python
 __pycache__/
 *.py[cod]
