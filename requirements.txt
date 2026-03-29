@@ -1,0 +1,6 @@
+flask>=3.0
+flask-cors>=4.0
+Pillow>=10.0
+numpy>=1.24
+scikit-image>=0.21
+python-dotenv>=1.0
