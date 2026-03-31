@@ -2,5 +2,16 @@ flask>=3.0
 flask-cors>=4.0
 Pillow>=10.0
 numpy>=1.24
-scikit-image>=0.21
 python-dotenv>=1.0
+
+# Deep learning
+torch>=2.0
+torchvision>=0.15
+timm>=0.9          # ConvNeXt backbone (convnext_tiny.in12k_ft_in1k)
+ml_collections>=0.1.1
+
+# Vision / image processing
+opencv-python>=4.8
+
+# NLP (BiomedBERT text encoder)
+transformers>=4.35

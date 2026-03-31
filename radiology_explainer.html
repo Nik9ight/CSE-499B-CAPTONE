@@ -63,6 +63,16 @@
   .cpill.sel { border-color: var(--text); }
   .save-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer; transition: filter 0.15s; }
   .save-btn:hover { filter: brightness(1.1); }
+  .type-row { display: flex; gap: 6px; align-items: flex-start; margin-bottom: 8px; }
+  .type-row input[type=radio] { width: auto; margin-top: 9px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+  .type-row-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .type-row-fields input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-mono); font-size: 12px; padding: 6px 8px; outline: none; transition: border 0.15s; }
+  .type-row-fields input:focus { border-color: var(--accent); }
+  .type-row-fields input::placeholder { color: #2a3a55; }
+  .type-del { background: none; border: none; color: var(--muted); cursor: pointer; padding: 6px 2px; font-size: 14px; line-height: 1; flex-shrink: 0; margin-top: 5px; }
+  .type-del:hover { color: var(--red); }
+  .add-type-btn { width: 100%; margin-top: 6px; padding: 7px; background: transparent; border: 1px dashed var(--border2); color: var(--muted); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 11px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
+  .add-type-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* Viewer */
   .viewer-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
@@ -174,12 +184,12 @@
     <div class="drawer-body">
 
       <div class="dg">
-        <label>Segmentation API endpoint</label>
-        <input type="text" id="cfgSeg" placeholder="http://localhost:5000/segment">
+        <label>Radiology image types</label>
+        <div id="typeList"></div>
+        <button class="add-type-btn" onclick="addTypeRow()">+ Add type</button>
         <div class="note">
-          Your Flask/FastAPI endpoint.<br>
-          Request body: <code>{ "image_base64": "..." }</code><br>
-          Response: <code>{ "mask_base64": "..." }</code> (binary PNG)
+          Select (●) the active type. Each type has its own endpoint.<br>
+          Request: <code>{ "image_base64": "..." }</code> → <code>{ "mask_base64": "..." }</code>
         </div>
       </div>
 
@@ -289,6 +299,7 @@
       </div>
       <div class="cfg-strip">
         SEG API &nbsp;<span id="sSeg">[ not configured ]</span>
+        &nbsp;·&nbsp; TYPE &nbsp;<span id="sType">[ not configured ]</span>
         &nbsp;·&nbsp; MODEL &nbsp;<span id="sModel">[ not configured ]</span>
       </div>
       <div class="report-body">
@@ -316,11 +327,15 @@
 
 <script>
 /* ── CONFIG ── */
-let C = { seg:'http://localhost:5000/segment', label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it' };
+let C = {
+  types: [{ id:'chest_xray', label:'Chest X-ray', endpoint:'http://localhost:5000/segment' }],
+  activeType: 'chest_xray',
+  label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it'
+};
 
 function loadCfg() {
   try { const s = localStorage.getItem('rv2'); if (s) C = {...C, ...JSON.parse(s)}; } catch(e) {}
-  document.getElementById('cfgSeg').value   = C.seg;
+  renderTypeRows();
   document.getElementById('cfgLabel').value = C.label;
   document.getElementById('cfgToken').value = C.token;
   document.getElementById('cfgModel').value = C.model;
@@ -329,7 +344,7 @@ function loadCfg() {
 }
 
 function saveCfg() {
-  C.seg   = document.getElementById('cfgSeg').value.trim();
+  collectTypeRows();
   C.label = document.getElementById('cfgLabel').value.trim() || 'Segmented region';
   C.token = document.getElementById('cfgToken').value.trim();
   C.model = document.getElementById('cfgModel').value;
@@ -349,8 +364,10 @@ function pickColor(el) {
 }
 
 function refreshStrip() {
-  document.getElementById('sSeg').textContent   = C.seg   ? C.seg.replace(/^https?:\/\//,'') : '[ not configured ]';
-  document.getElementById('sModel').textContent = C.model ? C.model.replace('google/','')     : '[ not configured ]';
+  const at = C.types && C.types.find(t => t.id === C.activeType);
+  document.getElementById('sSeg').textContent   = at?.endpoint ? at.endpoint.replace(/^https?:\/\//,'') : '[ not configured ]';
+  document.getElementById('sType').textContent  = at?.label    ? at.label                               : '[ not configured ]';
+  document.getElementById('sModel').textContent = C.model      ? C.model.replace('google/','')          : '[ not configured ]';
 }
 
 function refreshLegend() {
@@ -359,6 +376,57 @@ function refreshLegend() {
 }
 
 function toggleDrawer() { document.getElementById('drawer').classList.toggle('open'); }
+
+/* ── IMAGE TYPE LIST ── */
+function renderTypeRows() {
+  const list = document.getElementById('typeList');
+  list.innerHTML = '';
+  (C.types || []).forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'type-row';
+    row.innerHTML =
+      `<input type="radio" name="activeType" value="${t.id}" ${t.id === C.activeType ? 'checked' : ''}>` +
+      `<div class="type-row-fields">` +
+        `<input class="tr-label" type="text" value="${t.label}" placeholder="Label (e.g. Chest X-ray)">` +
+        `<input class="tr-ep"    type="text" value="${t.endpoint}" placeholder="http://localhost:5000/segment">` +
+      `</div>` +
+      `<button class="type-del" onclick="removeTypeRow(${i})" title="Remove">✕</button>`;
+    row.querySelector('input[type=radio]').addEventListener('change', e => { C.activeType = e.target.value; });
+    list.appendChild(row);
+  });
+}
+
+function collectTypeRows() {
+  const rows = document.querySelectorAll('#typeList .type-row');
+  rows.forEach((row, i) => {
+    if (!C.types[i]) return;
+    const rawLabel = row.querySelector('.tr-label').value.trim();
+    C.types[i].label    = rawLabel;
+    C.types[i].endpoint = row.querySelector('.tr-ep').value.trim();
+    C.types[i].id       = rawLabel.toLowerCase().replace(/\s+/g, '_') || C.types[i].id;
+  });
+  const checked = document.querySelector('input[name=activeType]:checked');
+  if (checked) C.activeType = checked.value;
+}
+
+function addTypeRow() {
+  collectTypeRows();
+  const newId = 'type_' + Date.now();
+  C.types.push({ id: newId, label: '', endpoint: '' });
+  renderTypeRows();
+  // Focus the new label input
+  const rows = document.querySelectorAll('#typeList .type-row');
+  if (rows.length) rows[rows.length - 1].querySelector('.tr-label').focus();
+}
+
+function removeTypeRow(i) {
+  collectTypeRows();
+  C.types.splice(i, 1);
+  if (!C.types.find(t => t.id === C.activeType)) {
+    C.activeType = C.types[0]?.id || '';
+  }
+  renderTypeRows();
+}
 
 /* ── STATE ── */
 let ST = { file:null, dataUrl:null, img:null, hasMask:false, rawMask:null, sentences:[], cache:{} };
@@ -433,32 +501,14 @@ function setOpacity(v) {
 /* ── SEGMENTATION ── */
 async function runSeg() {
   if (!ST.dataUrl) return;
-  if (!C.seg) { setSt('er','No segmentation endpoint set — open CONFIG'); return; }
+  const at = C.types && C.types.find(t => t.id === C.activeType);
+  if (!at || !at.endpoint) { setSt('er','No endpoint set for the active image type — open CONFIG'); return; }
 
-  setSt('ld','Calling segmentation API…');
+  setSt('ld',`Calling ${at.label || 'segmentation'} API…`);
   document.getElementById('bSeg').disabled = true;
 
   try {
-    /*
-    ┌─────────────────────────────────────────────────────────┐
-    │  YOUR FLASK / FASTAPI ENDPOINT                         │
-    │                                                        │
-    │  POST to: C.seg                                        │
-    │  Body:    { "image_base64": "<base64 string>" }        │
-    │                                                        │
-    │  Expected response:                                    │
-    │  { "mask_base64": "<base64 encoded binary PNG>" }      │
-    │                                                        │
-    │  The binary PNG should be:                             │
-    │    white pixels (≥128 brightness) = segmented region  │
-    │    black pixels (<128 brightness) = background         │
-    │                                                        │
-    │  CORS: enable it on your server so the browser can    │
-    │  reach it. Flask example:                              │
-    │    from flask_cors import CORS; CORS(app)              │
-    └─────────────────────────────────────────────────────────┘
-    */
-    const resp = await fetch(C.seg, {
+    const resp = await fetch(at.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image_base64: ST.dataUrl.split(',')[1] }),
@@ -471,7 +521,7 @@ async function runSeg() {
   } catch(err) {
     setSt('er','Segmentation failed: ' + err.message);
     showRepErr('Segmentation API error', err.message,
-      `· Is your server running at <strong>${C.seg}</strong>?<br>· Is CORS enabled? (Flask: <code>from flask_cors import CORS; CORS(app)</code>)<br>· Does your response include <code>mask_base64</code>?`);
+      `· Is your server running at <strong>${at.endpoint}</strong>?<br>· Is CORS enabled? (Flask: <code>from flask_cors import CORS; CORS(app)</code>)<br>· Does your response include <code>mask_base64</code>?`);
     document.getElementById('bSeg').disabled = false;
     return;
   }
