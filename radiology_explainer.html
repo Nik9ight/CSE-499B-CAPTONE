@@ -210,6 +210,12 @@
         </div>
       </div>
 
+      <div class="dg">
+        <label>Imaging modality</label>
+        <input type="text" id="cfgModality" placeholder="e.g. Chest X-Ray PA, CT Chest Axial, MRI Brain T2">
+        <div class="note">Tells MedGemma exactly what it's analyzing. Leave blank to let the model infer.</div>
+      </div>
+
       <hr class="dsep">
 
       <div class="dg">
@@ -301,6 +307,7 @@
         SEG API &nbsp;<span id="sSeg">[ not configured ]</span>
         &nbsp;·&nbsp; TYPE &nbsp;<span id="sType">[ not configured ]</span>
         &nbsp;·&nbsp; MODEL &nbsp;<span id="sModel">[ not configured ]</span>
+        <span id="sMod" style="display:none">&nbsp;·&nbsp; MODALITY &nbsp;<span></span></span>
       </div>
       <div class="report-body">
         <div class="empty-st" id="empSt">
@@ -330,12 +337,13 @@
 let C = {
   types: [{ id:'chest_xray', label:'Chest X-ray', endpoint:'http://localhost:5000/segment' }],
   activeType: 'chest_xray',
-  label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it'
+  label:'Segmented region', color:'59,130,246', token:'', model:'google/medgemma-4b-it', modality:''
 };
 
 function loadCfg() {
   try { const s = localStorage.getItem('rv2'); if (s) C = {...C, ...JSON.parse(s)}; } catch(e) {}
   renderTypeRows();
+  document.getElementById('cfgModality').value = C.modality;
   document.getElementById('cfgLabel').value = C.label;
   document.getElementById('cfgToken').value = C.token;
   document.getElementById('cfgModel').value = C.model;
@@ -345,6 +353,7 @@ function loadCfg() {
 
 function saveCfg() {
   collectTypeRows();
+  C.modality = document.getElementById('cfgModality').value.trim();
   C.label = document.getElementById('cfgLabel').value.trim() || 'Segmented region';
   C.token = document.getElementById('cfgToken').value.trim();
   C.model = document.getElementById('cfgModel').value;
@@ -368,6 +377,9 @@ function refreshStrip() {
   document.getElementById('sSeg').textContent   = at?.endpoint ? at.endpoint.replace(/^https?:\/\//,'') : '[ not configured ]';
   document.getElementById('sType').textContent  = at?.label    ? at.label                               : '[ not configured ]';
   document.getElementById('sModel').textContent = C.model      ? C.model.replace('google/','')          : '[ not configured ]';
+  const sModEl = document.getElementById('sMod');
+  if (C.modality) { sModEl.querySelector('span').textContent = C.modality; sModEl.style.display = ''; }
+  else { sModEl.style.display = 'none'; }
 }
 
 function refreshLegend() {
@@ -589,7 +601,10 @@ async function genReport() {
     `<div><div class="sec-label">Awaiting MedGemma response…</div>
      ${[100,85,92,72,88,60].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div>`;
 
-  const sys = `You are an expert radiologist. Analyze this medical image and generate a structured report.
+  const at = C.types && C.types.find(t => t.id === C.activeType);
+  const modalityHint = C.modality || at?.label || '';
+
+  const sys = `You are an expert radiologist analyzing a ${modalityHint ? modalityHint + ' image' : 'medical image'}. ${modalityHint ? 'This is a ' + modalityHint + ' study — apply findings and impression structure appropriate for this modality.' : ''} Analyze this image and generate a structured report.
 ${ST.hasMask ? `Note: a segmentation model has already identified the "${C.label}" region in this image. Incorporate this finding.` : ''}
 Return ONLY valid JSON — no markdown fences, no preamble — with this exact structure:
 {
@@ -615,6 +630,20 @@ Each "text" = one complete sentence. 2–4 sentences per section. Formal radiolo
     │  The image is sent as the full data URL (data:image/jpeg;base64,…) │
     └─────────────────────────────────────────────────────────────────────┘
     */
+    let imageForReport = ST.dataUrl;
+    if (ST.hasMask) {
+      const co = document.getElementById('cOrig');
+      const cv = document.getElementById('cOver');
+      const tmp = document.createElement('canvas');
+      tmp.width = co.width; tmp.height = co.height;
+      const ctx = tmp.getContext('2d');
+      ctx.drawImage(co, 0, 0);
+      ctx.globalAlpha = parseFloat(cv.style.opacity) || 0.6;
+      ctx.drawImage(cv, 0, 0);
+      ctx.globalAlpha = 1;
+      imageForReport = tmp.toDataURL('image/png');
+    }
+
     const hfResp = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${C.token}` },
@@ -624,7 +653,7 @@ Each "text" = one complete sentence. 2–4 sentences per section. Formal radiolo
         messages: [
           { role:'system', content: sys },
           { role:'user', content: [
-            { type:'image_url', image_url:{ url: ST.dataUrl } },
+            { type:'image_url', image_url:{ url: imageForReport } },
             { type:'text', text:'Generate the structured radiology report.' }
           ]}
         ]
