@@ -1,0 +1,44 @@
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  height: calc(100vh - 56px);
+}
+
+.viewer-panel {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.report-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cfg-strip {
+  padding: 7px 18px;
+  background: rgba(59,130,246,.04);
+  border-bottom: 1px solid rgba(59,130,246,.1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(59,130,246,.5);
+  letter-spacing: .06em;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cfg-strip span {
+  color: rgba(59,130,246,.85);
+}

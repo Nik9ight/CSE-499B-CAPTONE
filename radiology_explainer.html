@@ -701,9 +701,6 @@ async function genReport() {
     const data = await resp.json();
     if (!data.report) throw new Error('Response missing "report" field');
     console.log('Raw report from API:', data.report);
-    renderReport(parseReport(data.report));
-    document.getElementById('repCont').style.display = 'block';
-    document.getElementById('hint').style.display = 'block';
     setSt('ok', 'Report generated — click any sentence for explanation');
   } catch (err) {
     setSt('er', 'Report generation failed: ' + err.message);
@@ -713,119 +710,8 @@ async function genReport() {
   document.getElementById('bRep').disabled = false;
 }
 
-function parseReport(raw) {
-  try { return JSON.parse(raw.replace(/```json|```/g,'').trim()); } catch(_) {}
-  try { const m = raw.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); } catch(_) {}
-  return { modality:'Medical Image Report', sections:[{
-    title:'Findings',
-    sentences: raw.split(/\n+/).filter(l=>l.trim().length>8)
-                  .map(l=>({ text:l.trim().replace(/^[-•*]\s*/,''), tag:'finding' }))
-  }]};
-}
-
-/* ── RENDER REPORT ── */
-function renderReport(rep) {
-  ST.sentences = []; ST.cache = {}; ST.activeSentId = null;
-  let html = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:.08em">${rep.modality||'MEDICAL IMAGE REPORT'}</div>`;
-  (rep.sections||[]).forEach(sec => {
-    html += `<div class="r-section"><div class="sec-label">${sec.title}</div><div>`;
-    (sec.sentences||[]).forEach(s => {
-      const id = 'x'+ST.sentences.length;
-      ST.sentences.push({id, text:s.text, tag:s.tag||''});
-      html += `<span class="sent" id="${id}" onclick="onSentClick('${id}')">${s.text} </span>`;
-    });
-    html += `</div></div>`;
-  });
-  html += `<div class="disc"><strong>⚠ Educational demo only.</strong> AI-generated content — not a substitute for a qualified radiologist's clinical review.</div>`;
-  document.getElementById('repCont').innerHTML = html;
-}
-
 /* ── CLICK-BASED EXPLANATION (side panel) ── */
-function onSentClick(id) {
-  // Deselect previous
-  document.querySelectorAll('.sent.active').forEach(el => el.classList.remove('active'));
 
-  // If clicking the same sentence, deselect and clear
-  if (ST.activeSentId === id) {
-    ST.activeSentId = null;
-    clearExplanation();
-    return;
-  }
-
-  // Select new sentence
-  ST.activeSentId = id;
-  const el = document.getElementById(id);
-  el.classList.add('active');
-
-  showExplanation(id);
-}
-
-function clearExplanation() {
-  document.getElementById('explainPlaceholder').style.display = '';
-  document.getElementById('explainBody').style.display = 'none';
-  document.getElementById('explainBody').innerHTML = '';
-}
-
-async function showExplanation(id) {
-  const ent = ST.sentences.find(s => s.id === id);
-  if (!ent) return;
-
-  const body = document.getElementById('explainBody');
-  const placeholder = document.getElementById('explainPlaceholder');
-  placeholder.style.display = 'none';
-  body.style.display = 'block';
-
-  // Show the quoted sentence
-  let html = `<div class="explain-sentence">"${ent.text}"</div>`;
-
-  // If cached, show immediately
-  if (ST.cache[id]) {
-    html += `<div class="explain-text" style="margin-top:16px">${ST.cache[id]}</div>`;
-    if (ent.tag) html += `<div class="explain-tag">${ent.tag}</div>`;
-    body.innerHTML = html;
-    return;
-  }
-
-  // Show loading state
-  html += `<div class="explain-loading" style="margin-top:16px"><div class="spinner"></div> Loading explanation…</div>`;
-  body.innerHTML = html;
-
-  if (!C.token) {
-    body.innerHTML = `<div class="explain-sentence">"${ent.text}"</div>`
-      + `<div class="explain-text" style="margin-top:16px;color:var(--muted)">Add your HuggingFace token in CONFIG to enable AI explanations.</div>`;
-    return;
-  }
-
-  try {
-    const r = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${C.token}` },
-      body: JSON.stringify({
-        model: C.model,
-        max_tokens: 1000,
-        messages: [{ role: 'user', content:
-          `A radiology report says: "${ent.text}"\n\nExplain this in simple, calm language a patient can understand. 2–3 sentences. No jargon. No bullet points.`
-        }]
-      })
-    });
-    const d = await r.json();
-    const exp = d.choices?.[0]?.message?.content?.trim() || 'Unable to load explanation.';
-    ST.cache[id] = exp;
-
-    // Only update if this sentence is still the active one
-    if (ST.activeSentId === id) {
-      let resultHtml = `<div class="explain-sentence">"${ent.text}"</div>`;
-      resultHtml += `<div class="explain-text" style="margin-top:16px">${exp}</div>`;
-      if (ent.tag) resultHtml += `<div class="explain-tag">${ent.tag}</div>`;
-      body.innerHTML = resultHtml;
-    }
-  } catch (_) {
-    if (ST.activeSentId === id) {
-      body.innerHTML = `<div class="explain-sentence">"${ent.text}"</div>`
-        + `<div class="explain-text" style="margin-top:16px;color:var(--red)">Could not load explanation. Check your HF token and network.</div>`;
-    }
-  }
-}
 
 /* ── UTILS ── */
 function setSt(t, msg) {
