@@ -1,0 +1,7 @@
+models/
+myenv/
+test_annotations.xlsx
+_pycache__/
+requirements.txt
+README.md
+.env.example

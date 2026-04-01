@@ -21,7 +21,12 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
-from model_registry import get_model
+# from model_registry import get_model
+from reportGen import reportGen
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from huggingface_hub import login
+import torch
+MODEL_ID = "google/medgemma-1.5-4b-it"
 
 # Load .env if present (pip install python-dotenv, or set vars in your shell)
 try:
@@ -73,7 +78,34 @@ def segment_typed(image_type):
 def segment():
     """Generic fallback route — defaults to chest_xray model."""
     return _run_segment("chest_xray")
+# def load_model():
+#     """Load model and processor once."""
+#     login(token="")
 
+#     model = AutoModelForImageTextToText.from_pretrained(
+#         MODEL_ID,
+#         dtype=torch.bfloat16,
+#         device_map="cuda",
+#     )
+#     processor = AutoProcessor.from_pretrained(MODEL_ID)
+#     return model, processor
+# model, processor = load_model()
+@app.route("/report", methods=["POST"])
+def generate_report():
+    data = request.get_json(force=True)
+    if not data or "image_base64" not in data:
+        return jsonify({"error": "Missing image_base64 field"}), 400
+
+    try:
+        img_bytes = base64.b64decode(data["image_base64"])
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    except Exception as e:
+        return jsonify({"error": f"Could not decode image: {e}"}), 400
+    model= "None"
+    processor = "None"
+    report = reportGen(img, model, processor)
+    return jsonify({"report": report})
+    
 
 if __name__ == "__main__":
     app.run(host=HOST, port=PORT, debug=DEBUG)
