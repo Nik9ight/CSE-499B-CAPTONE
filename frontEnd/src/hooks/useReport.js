@@ -12,6 +12,30 @@ function parseReport(raw) {
       }).filter((s) => s.text),
     }));
 
+  // Pull heading-like sentences (e.g. "FINDINGS:", "IMPRESSIONS:") out as section breaks
+  const splitHeadings = (sections) => {
+    const result = [];
+    for (const sec of sections) {
+      let cur = { title: sec.title, sentences: [] };
+      for (const s of sec.sentences) {
+        const hm = s.text.match(/^([A-Za-z][A-Za-z\s]{0,38}):\s*(.*)$/);
+        if (hm && hm[1].trim().split(/\s+/).length <= 5) {
+          if (cur.sentences.length) result.push(cur);
+          cur = { title: hm[1].trim(), sentences: [] };
+          const rest = hm[2].trim();
+          if (rest) {
+            for (const t of rest.split(/(?<=\.)\s+/).map((x) => x.trim()).filter(Boolean))
+              cur.sentences.push({ id: `s${sentId++}`, text: t, tag: s.tag });
+          }
+        } else {
+          cur.sentences.push(s);
+        }
+      }
+      if (cur.sentences.length) result.push(cur);
+    }
+    return result.length ? result : sections;
+  };
+
   // 1. Strip ```json fences
   let cleaned = raw;
   const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -20,7 +44,7 @@ function parseReport(raw) {
   // 2. Try JSON.parse
   try {
     const obj = JSON.parse(cleaned);
-    if (obj.sections) return { modality: obj.modality || '', sections: assignIds(obj.sections) };
+    if (obj.sections) return { modality: obj.modality || '', sections: splitHeadings(assignIds(obj.sections)) };
   } catch (_) { /* not JSON */ }
 
   // 3. Try extracting first { ... }
@@ -28,14 +52,33 @@ function parseReport(raw) {
   if (braces) {
     try {
       const obj = JSON.parse(braces[0]);
-      if (obj.sections) return { modality: obj.modality || '', sections: assignIds(obj.sections) };
+      if (obj.sections) return { modality: obj.modality || '', sections: splitHeadings(assignIds(obj.sections)) };
     } catch (_) { /* not valid JSON */ }
   }
 
-  // 4. Fallback: split by newlines into single section
-  const lines = raw.split(/\n+/).map((l) => l.trim()).filter(Boolean);
-  const sentences = lines.map((text) => ({ id: `s${sentId++}`, text, tag: '' }));
-  return { modality: '', sections: [{ title: 'Findings', sentences }] };
+  // 4. Fallback: detect headings (word(s) ending with :) and split sentences by period
+  const rawLines = raw.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const sections = [];
+  let cur = { title: 'Findings', sentences: [] };
+
+  for (const line of rawLines) {
+    const hm = line.match(/^([A-Za-z][A-Za-z\s]{0,38}):\s*(.*)$/);
+    if (hm && hm[1].trim().split(/\s+/).length <= 5) {
+      if (cur.sentences.length) sections.push(cur);
+      cur = { title: hm[1].trim(), sentences: [] };
+      const rest = hm[2].trim();
+      if (rest) {
+        for (const t of rest.split(/(?<=\.)\s+/).map((s) => s.trim()).filter(Boolean))
+          cur.sentences.push({ id: `s${sentId++}`, text: t, tag: '' });
+      }
+    } else {
+      for (const t of line.split(/(?<=\.)\s+/).map((s) => s.trim()).filter(Boolean))
+        cur.sentences.push({ id: `s${sentId++}`, text: t, tag: '' });
+    }
+  }
+  if (cur.sentences.length) sections.push(cur);
+  if (!sections.length) sections.push({ title: 'Findings', sentences: [] });
+  return { modality: '', sections };
 }
 
 export function useReport() {
