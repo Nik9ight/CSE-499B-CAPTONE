@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import './ConfigDrawer.css';
 
@@ -11,60 +11,30 @@ const COLOR_OPTIONS = [
   '251,113,133',
 ];
 
+const PRECODED_TYPES = [
+  { id: 'chest_xray', label: 'Chest X-ray' },
+  { id: 'lung_ct', label: 'Lung CT' },
+  { id: 'brain_mri', label: 'Brain MRI' },
+  { id: 'bone_xray', label: 'Bone X-ray' },
+  { id: 'retinal_scan', label: 'Retinal Scan' },
+];
+
 export default function ConfigDrawer({ open, onClose }) {
   const { config, setConfig } = useAppContext();
 
   // Local draft state for editing — initialized from config when drawer opens
   const [draft, setDraft] = useState(() => structuredClone(config));
-  const lastRowRef = useRef(null);
 
   useEffect(() => {
     if (open) setDraft(structuredClone(config));
   }, [open, config]);
 
-  /* ── Type list helpers ── */
-  function updateType(index, field, value) {
-    setDraft(prev => {
-      const types = prev.types.map((t, i) =>
-        i === index ? { ...t, [field]: value } : t
-      );
-      // Auto-derive id from label
-      if (field === 'label') {
-        types[index].id = value.toLowerCase().replace(/\s+/g, '_') || types[index].id;
-      }
-      return { ...prev, types };
-    });
-  }
-
-  function setActiveType(id) {
-    setDraft(prev => ({ ...prev, activeType: id }));
-  }
-
-  function addTypeRow() {
-    const newId = 'type_' + Date.now();
-    setDraft(prev => ({
-      ...prev,
-      types: [...prev.types, { id: newId, label: '', endpoint: '' }],
-    }));
-    // Focus will be handled via ref after render
-    lastRowRef.current = true;
-  }
-
-  function removeTypeRow(index) {
-    setDraft(prev => {
-      const types = prev.types.filter((_, i) => i !== index);
-      let activeType = prev.activeType;
-      if (!types.find(t => t.id === activeType)) {
-        activeType = types[0]?.id || '';
-      }
-      return { ...prev, types, activeType };
-    });
-  }
-
   /* ── Save ── */
   function handleSave() {
     setConfig({
       ...draft,
+      types: PRECODED_TYPES,
+      endpoint: draft.endpoint.trim() || 'http://localhost:5000',
       label: draft.label.trim() || 'Segmented region',
       modality: draft.modality.trim(),
       token: draft.token.trim(),
@@ -84,45 +54,39 @@ export default function ConfigDrawer({ open, onClose }) {
       </div>
 
       <div className="drawer-body">
-        {/* Radiology image types */}
+        {/* Radiology image types — pre-coded radio selection */}
         <div className="dg">
-          <label>Radiology image types</label>
-          <div>
-            {draft.types.map((t, i) => (
-              <div className="type-row" key={t.id}>
+          <label>Radiology image type</label>
+          <div className="type-radio-list">
+            {PRECODED_TYPES.map(t => (
+              <label key={t.id} className="type-radio">
                 <input
                   type="radio"
                   name="activeType"
                   checked={t.id === draft.activeType}
-                  onChange={() => setActiveType(t.id)}
+                  onChange={() => setDraft(prev => ({ ...prev, activeType: t.id }))}
                 />
-                <div className="type-row-fields">
-                  <input
-                    type="text"
-                    value={t.label}
-                    placeholder="Label (e.g. Chest X-ray)"
-                    onChange={e => updateType(i, 'label', e.target.value)}
-                    ref={lastRowRef.current && i === draft.types.length - 1
-                      ? el => { if (el) { el.focus(); lastRowRef.current = false; } }
-                      : undefined}
-                  />
-                  <input
-                    type="text"
-                    value={t.endpoint}
-                    placeholder="http://localhost:5000/segment"
-                    onChange={e => updateType(i, 'endpoint', e.target.value)}
-                  />
-                </div>
-                <button className="type-del" onClick={() => removeTypeRow(i)} title="Remove">
-                  &#10005;
-                </button>
-              </div>
+                <span className="type-radio-label">{t.label}</span>
+              </label>
             ))}
           </div>
-          <button className="add-type-btn" onClick={addTypeRow}>+ Add type</button>
           <div className="note">
-            Select (&bull;) the active type. Each type has its own endpoint.<br />
-            Request: <code>{`{ "image_base64": "..." }`}</code> &rarr; <code>{`{ "mask_base64": "..." }`}</code>
+            Select the active type. It is passed as <code>?modality=</code> to the API.
+          </div>
+        </div>
+
+        {/* Server endpoint */}
+        <div className="dg">
+          <label>Server endpoint</label>
+          <input
+            type="text"
+            value={draft.endpoint}
+            placeholder="http://localhost:5000"
+            onChange={e => setDraft(prev => ({ ...prev, endpoint: e.target.value }))}
+          />
+          <div className="note">
+            Base URL for segmentation, report, and explanation APIs.<br />
+            <code>/segment?modality=...</code> &middot; <code>/report</code> &middot; <code>/explain</code>
           </div>
         </div>
 

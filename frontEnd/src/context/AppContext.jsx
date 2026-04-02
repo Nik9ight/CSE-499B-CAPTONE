@@ -3,8 +3,15 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 const STORAGE_KEY = 'rv2';
 
 const defaultConfig = {
-  types: [{ id: 'chest_xray', label: 'Chest X-ray', endpoint: 'http://localhost:5000/segment' }],
+  types: [
+    { id: 'chest_xray', label: 'Chest X-ray' },
+    { id: 'brain_mri', label: 'Brain MRI' },
+    { id: 'abdomen_ct', label: 'Abdomen CT' },
+    { id: 'bone_xray', label: 'Bone X-ray' },
+    { id: 'retinal_scan', label: 'Retinal Scan' },
+  ],
   activeType: 'chest_xray',
+  endpoint: 'http://localhost:5000',
   label: 'Segmented region',
   color: '59,130,246',
   token: '',

@@ -9,17 +9,19 @@ export function useSegmentation() {
     async (setStatus) => {
       if (!appState.dataUrl) return false;
 
-      const activeType = config.types?.find((t) => t.id === config.activeType);
-      if (!activeType?.endpoint) {
-        setStatus({ type: 'er', message: 'No endpoint set for the active image type \u2014 open CONFIG' });
+      if (!config.endpoint) {
+        setStatus({ type: 'er', message: 'No endpoint configured \u2014 open CONFIG' });
         return false;
       }
 
+      const activeType = config.types?.find((t) => t.id === config.activeType);
       setIsLoading(true);
-      setStatus({ type: 'ld', message: `Calling ${activeType.label || 'segmentation'} API\u2026` });
+      setStatus({ type: 'ld', message: `Calling ${activeType?.label || 'segmentation'} API\u2026` });
 
       try {
-        const resp = await fetch(activeType.endpoint, {
+        const base = config.endpoint.replace(/\/+$/, '');
+        const url = `${base}/segment?modality=${encodeURIComponent(config.activeType)}`;
+        const resp = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_base64: appState.dataUrl.split(',')[1] }),

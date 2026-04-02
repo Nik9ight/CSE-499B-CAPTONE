@@ -11,13 +11,13 @@ PROMPT = (
     "Include sections for Findings, Impressions, and Recommendations."
 )
 res = (f"""
-    Raw model response: FINDINGS:\n
-    The image is a chest X-ray. There is a consolidation in the left lower lobe. The right lung appears clear. The heart size is normal. The mediastinum is normal. There is no pleural effusion.\n\n
+    Raw model response: FINDINGS:
+    The image is a chest X-ray. There is a consolidation in the left lower lobe. The right lung appears clear. The heart size is normal. The mediastinum is normal. There is no pleural effusion.
 
-    IMPRESSIONS:\n
-    Left lower lobe consolidation.\n
+    IMPRESSIONS:
+    Left lower lobe consolidation.
 
-    RECOMMENDATIONS:\n
+    RECOMMENDATIONS:
     Follow up as indicated.
     """
 )

@@ -46,11 +46,11 @@ def get_CTranS_config():
 
     return cfg
 _model = None
-def _load_model(model_path="./models/best_model-LViT.pth.tar"):
+def _load_model(modality):
     global _model
     if _model is not None:
         return _model
-
+    model_path = f"./models/{modality}/best_model-LViT.pth.tar"
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     checkpoint = torch.load(model_path, map_location="cuda")
     cfg = get_CTranS_config()
@@ -67,18 +67,17 @@ def _load_model(model_path="./models/best_model-LViT.pth.tar"):
 
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
-    print("Model loaded.")
+    print(f"Model loaded. "f" Path: {model_path}")
     _model = model
     return _model
 
-def test_model(input_image, text_tensor=None):
+def test_model(input_image, text=None, modality="chest_xray"):
     """
     input_image  : PIL Image (RGB)
     text_tensor  : torch tensor [1, L, D] or None
     Returns      : PIL Image (grayscale mask, 0 or 255)
     """
-    model = _load_model()
-
+    model = _load_model(modality=modality)
     # Preprocess: ensure RGB, resize, normalize
     img_rgb = input_image.convert("RGB")
     img_resized = img_rgb.resize((224, 224), Image.BILINEAR)
@@ -89,10 +88,13 @@ def test_model(input_image, text_tensor=None):
     img_t = torch.from_numpy(img_np).float().cuda()
 
     with torch.no_grad():
-        if text_tensor is None:
-            text = "Bilateral pulmonary infection, two infected areas, lower left lung and lower right lung."
+        if text is None:
+            text = "Bilateral pulmonary infection, two infected areas, lower left lung and middle lower right lung."
+            text_tensor = text_to_tensor(text)
+        else:
             text_tensor = text_to_tensor(text)
         out = model(img_t, text_tensor.cuda())
+        # out = model(img_t)
 
     logits = out["out"]
     probs = torch.sigmoid(logits)

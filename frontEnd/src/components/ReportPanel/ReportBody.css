@@ -1,0 +1,30 @@
+.r-section {
+  margin-bottom: 26px;
+}
+
+.sec-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.disc {
+  margin-top: 22px;
+  padding: 11px 14px;
+  background: rgba(251, 191, 36, 0.04);
+  border: 1px solid rgba(251, 191, 36, 0.16);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: rgba(251, 191, 36, 0.6);
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+
+.disc strong {
+  color: var(--amber);
+}

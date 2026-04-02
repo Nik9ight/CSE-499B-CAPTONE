@@ -21,7 +21,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
-# from model_registry import get_model
+from explain import explain
+from test_model import test_model
 from reportGen import reportGen
 from transformers import AutoProcessor, AutoModelForImageTextToText
 from huggingface_hub import login
@@ -43,24 +44,20 @@ app = Flask(__name__)
 CORS(app)  # Required so the browser can call this from the HTML file
 
 
-def _run_segment(image_type: str):
-    """Shared logic for both routes."""
+@app.route("/segment", methods=["POST"])
+def segment():
+    """Route that reads modality from query param, e.g. ?modality=chest_xray"""
+    modality = request.args.get("modality", "chest_xray")  # defaults to chest_xray if not provided
     data = request.get_json(force=True)
     if not data or "image_base64" not in data:
         return jsonify({"error": "Missing image_base64 field"}), 400
-
-    try:
-        model_fn = get_model(image_type)
-    except KeyError as e:
-        return jsonify({"error": str(e)}), 400
-
     try:
         img_bytes = base64.b64decode(data["image_base64"])
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {e}"}), 400
-
-    mask_img = model_fn(img)
+    print(f"Received image for modality '{modality}'")
+    mask_img = test_model(img, modality=modality)
 
     buf = io.BytesIO()
     mask_img.save(buf, format="PNG")
@@ -68,16 +65,6 @@ def _run_segment(image_type: str):
     return jsonify({"mask_base64": mask_b64})
 
 
-@app.route("/segment/<image_type>", methods=["POST"])
-def segment_typed(image_type):
-    """Type-specific route — configure the frontend endpoint as /segment/chest_xray etc."""
-    return _run_segment(image_type)
-
-
-@app.route("/segment", methods=["POST"])
-def segment():
-    """Generic fallback route — defaults to chest_xray model."""
-    return _run_segment("chest_xray")
 # def load_model():
 #     """Load model and processor once."""
 #     login(token="")
@@ -95,7 +82,6 @@ def generate_report():
     data = request.get_json(force=True)
     if not data or "image_base64" not in data:
         return jsonify({"error": "Missing image_base64 field"}), 400
-
     try:
         img_bytes = base64.b64decode(data["image_base64"])
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
@@ -105,7 +91,13 @@ def generate_report():
     processor = "None"
     report = reportGen(img, model, processor)
     return jsonify({"report": report})
-    
+
+@app.route("/explain", methods=["POST"])
+def explainSentence():
+    data = request.get_json(force=True)
+    sentence = data.get("sentenceText", "")
+    response = explain(sentence)
+    return jsonify({"explanation": response})
 
 if __name__ == "__main__":
     app.run(host=HOST, port=PORT, debug=DEBUG)
