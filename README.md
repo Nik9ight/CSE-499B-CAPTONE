@@ -1,16 +1,15 @@
 # RadVision — Radiology Segmentation & Report Explainer
 
-A standalone web application for medical image analysis. Upload a radiology image, segment it with a local Python backend, generate an AI-powered diagnostic report via MedGemma, and get plain-language explanations of each finding on hover.
+A web application for medical image analysis. Upload a radiology image, segment it with a local Python backend powered by LViTN (Language-Vision Transformer), generate an AI-powered diagnostic report via MedGemma, and get plain-language explanations of each finding by clicking sentences in the report.
 
 ---
 
 ## Features
 
-- **Image segmentation** — sends the image to a local Flask server and overlays the predicted mask
+- **Image segmentation** — language-guided LViTN model segments the uploaded image and overlays the predicted mask
 - **AI report generation** — calls the HuggingFace Inference API (MedGemma) to produce a structured radiology report
-- **Hover-to-explain** — click any sentence in the report to get a plain-language explanation from MedGemma
+- **Click-to-explain** — click any sentence in the report to get a plain-language explanation from MedGemma
 - **Three canvas views** — Original, Mask, and Overlay with adjustable opacity
-- **No build step** — the entire frontend is a single HTML file
 
 ---
 
@@ -18,16 +17,40 @@ A standalone web application for medical image analysis. Upload a radiology imag
 
 ```
 .
-├── radiology_explainer.html   # Full frontend (CSS + HTML + JS, no frameworks)
-├── server.py                  # Flask segmentation backend
-├── requirements.txt           # Python dependencies
-├── .env.example               # Secret config template — copy to .env
-└── .gitignore
+├── server.py            # Flask API server (segmentation, report, explanation endpoints)
+├── test_model.py        # LViTN inference pipeline
+├── reportGen.py         # MedGemma report generation
+├── explain.py           # Sentence explanation endpoint
+├── model_registry.py    # Maps imaging modality → model config
+├── nets/
+│   ├── LViTN.py         # Language-Vision Transformer Network architecture
+│   └── ViTN.py          # Vision Transformer backbone
+├── models/              # Pretrained weights (not included — see below)
+│   └── chest_xray/
+│       └── best_model-LViT.pth.tar
+├── requirements.txt
+├── .env.example
+└── frontEnd/            # React + Vite frontend
+    ├── src/
+    │   ├── App.jsx
+    │   ├── context/AppContext.jsx   # Global state (config + runtime)
+    │   ├── hooks/                   # useSegmentation, useReport, useExplanation
+    │   └── components/              # ViewerPanel, ReportPanel, Header, etc.
+    └── package.json
 ```
 
 ---
 
-## Quick Start
+## Setup & Running
+
+### Prerequisites
+
+- Python 3.10+
+- Node.js 18+
+- CUDA-capable GPU (required for LViTN inference)
+- HuggingFace account with MedGemma access (for report generation)
+
+---
 
 ### 1. Clone and configure secrets
 
@@ -35,30 +58,51 @@ A standalone web application for medical image analysis. Upload a radiology imag
 git clone <repo-url>
 cd <repo-folder>
 cp .env.example .env
-# Open .env and fill in your HF_TOKEN
+# Open .env and set your HF_TOKEN
 ```
 
-### 2. Start the segmentation backend
+---
+
+### 2. Download model weights
+
+Pretrained LViTN weights are not included in the repository. Place the checkpoint at:
+
+```text
+models/chest_xray/best_model-LViT.pth.tar
+```
+
+---
+
+### 3. Start the backend
 
 ```bash
 pip install -r requirements.txt
 python server.py        # listens on http://localhost:5000
 ```
 
-### 3. Open the frontend
+---
 
-Open `radiology_explainer.html` directly in a browser — no server needed for the frontend.
+### 4. Start the frontend
 
-### 4. Configure the app
+```bash
+cd frontEnd/
+npm install
+npm run dev             # runs on http://localhost:5173
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+### 5. Configure the app
 
 Click **CONFIG** (top-right) and enter:
 
 | Setting | Value |
 |---------|-------|
-| Segmentation API endpoint | `http://localhost:5000/segment` |
+| Segmentation API endpoint | `http://localhost:5000` |
 | HuggingFace token | your `hf_…` token |
 | Model | `google/medgemma-4b-it` (fast) or `google/medgemma-27b-it` (quality) |
-| Mask label / overlay color | optional |
 
 Config is saved to `localStorage` — you only need to set it once.
 
@@ -66,46 +110,47 @@ Config is saved to `localStorage` — you only need to set it once.
 
 ## HuggingFace Access
 
-MedGemma is a gated model. Before using it:
+MedGemma is a gated model. Before using report generation:
 
 1. Request access at `huggingface.co/google/medgemma-4b-it`
 2. Generate a token at `huggingface.co/settings/tokens`
-3. Add it to `.env` as `HF_TOKEN=hf_…` (for local reference) and/or paste it into the CONFIG drawer
-
----
-
-## Plugging in a Real Segmentation Model
-
-Edit the `segment_image()` function in [server.py](server.py):
-
-```python
-def segment_image(img: Image.Image) -> Image.Image:
-    # img  — PIL Image (RGB)
-    # return a grayscale PIL Image; white pixels (>128) = segmented region
-    ...
-```
-
-Drop-in replacements: PyTorch U-Net, MedSAM, or any HuggingFace segmentation model. The demo uses Otsu thresholding as a placeholder.
+3. Add it to `.env` as `HF_TOKEN=hf_…` and/or paste it into the CONFIG drawer
 
 ---
 
 ## API Reference
 
-### `POST /segment`
-
-**Request body**
+### `POST /segment?modality=<type>`
 
 ```json
+// Request
 { "image_base64": "<base64-encoded PNG/JPEG>" }
-```
 
-**Response**
-
-```json
+// Response
 { "mask_base64": "<base64-encoded grayscale PNG>" }
 ```
 
-White pixels in the mask (`> 128`) mark the segmented region.
+White pixels (`> 128`) in the mask mark the segmented region.
+
+### `POST /report`
+
+```json
+// Request
+{ "image_base64": "<base64-encoded image>" }
+
+// Response
+{ "report": "<JSON string with Findings/Impressions/Recommendations>" }
+```
+
+### `POST /explain`
+
+```json
+// Request
+{ "sentenceText": "<a sentence from the report>" }
+
+// Response
+{ "explanation": "<plain-language explanation>" }
+```
 
 ---
 
@@ -128,8 +173,9 @@ See [.env.example](.env.example) for all options.
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vanilla HTML/CSS/JS, HTML5 Canvas |
-| Backend | Python, Flask, Flask-CORS |
-| Segmentation (demo) | scikit-image (Otsu threshold) |
-| AI / LLM | HuggingFace Inference API — MedGemma |
-| Fonts | IBM Plex Sans, IBM Plex Mono |
+| Frontend | React 19, Vite, HTML5 Canvas |
+| Backend | Python, Flask 3, Flask-CORS |
+| Segmentation | LViTN (Language-Vision Transformer Network) |
+| Text encoder | BiomedBERT (`microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext`) |
+| Vision backbone | ConvNeXt (`convnext_tiny.in12k_ft_in1k`) via timm |
+| AI / LLM | HuggingFace Inference API — MedGemma 4b / 27b |
