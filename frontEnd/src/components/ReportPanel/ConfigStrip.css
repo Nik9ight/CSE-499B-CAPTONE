@@ -1,11 +1,13 @@
 .cfg-strip {
   padding: 7px 18px;
-  background: rgba(59,130,246,.04);
-  border-bottom: 1px solid rgba(59,130,246,.1);
-  font-family: var(--font-mono);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-ui);
   font-size: 10px;
-  color: rgba(59,130,246,.5);
-  letter-spacing: .06em;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -14,5 +16,5 @@
 }
 
 .cfg-strip span {
-  color: rgba(59,130,246,.85);
+  color: var(--accent);
 }

@@ -5,18 +5,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 11px;
+  font-weight: 400;
   color: var(--muted);
   flex-shrink: 0;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 
 .sdot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--border2);
+  background: var(--border);
   flex-shrink: 0;
 }
 
@@ -37,7 +38,8 @@
 .hint {
   margin-left: auto;
   font-size: 10px;
-  color: rgba(59,130,246,.55);
+  color: rgba(30, 215, 96, 0.45);
+  letter-spacing: 0.04em;
 }
 
 @keyframes pulse {

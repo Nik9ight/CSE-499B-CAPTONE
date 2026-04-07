@@ -5,12 +5,13 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  border: 2px dashed var(--border2);
+  border: 2px dashed var(--border);
   margin: 20px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  background: var(--bg);
 }
 
 .upload-zone:hover,
@@ -31,8 +32,8 @@
 .uicon {
   width: 50px;
   height: 50px;
-  border: 2px solid var(--border2);
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,22 +41,26 @@
 
 .ulabel {
   font-size: 13px;
+  font-family: var(--font-ui);
+  font-weight: 400;
   color: var(--muted);
   text-align: center;
   line-height: 1.8;
 }
 
 .ulabel strong {
-  color: var(--accent);
-  font-weight: 500;
+  color: var(--text);
+  font-weight: 700;
   display: block;
   font-size: 15px;
   margin-bottom: 4px;
 }
 
 .ufmt {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 11px;
+  font-weight: 400;
   color: var(--border2);
   letter-spacing: 0.06em;
+  text-transform: uppercase;
 }

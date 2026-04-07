@@ -10,40 +10,44 @@
 }
 
 .panel-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 11px;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 1.4px;
   color: var(--muted);
   text-transform: uppercase;
   flex: 1;
 }
 
+/* Tab group — pill container */
 .vtabs {
   display: flex;
   gap: 2px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 2px;
+  border-radius: var(--radius-pill);
+  padding: 3px;
 }
 
 .vtab {
-  padding: 4px 11px;
-  border-radius: 4px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   cursor: pointer;
   color: var(--muted);
   border: none;
   background: transparent;
   transition: all 0.15s;
-  letter-spacing: 0.04em;
 }
 
 .vtab.active {
   background: var(--surface2);
   color: var(--text);
-  border: 1px solid var(--border2);
+  box-shadow: var(--shadow-inset);
 }
 
 .viewer-body {
@@ -52,6 +56,7 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  background: var(--bg);
 }
 
 .ov-controls {
@@ -69,10 +74,11 @@
 }
 
 .ov-controls label {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 11px;
+  font-weight: 400;
   color: var(--muted);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -91,41 +97,46 @@
   flex-shrink: 0;
 }
 
-/* ── Buttons ── */
+/* ── Buttons — pill geometry, uppercase labels ── */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s;
   white-space: nowrap;
 }
 
+/* Primary — Spotify Green CTA */
 .btn-p {
   background: var(--accent);
-  color: #fff;
+  color: #000;
   border-color: var(--accent);
   flex: 1;
 }
 
-.btn-p:hover { filter: brightness(1.12); }
+.btn-p:hover { filter: brightness(1.08); }
 .btn-p:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
 
+/* Secondary — outlined dark pill */
 .btn-s {
-  background: var(--surface2);
+  background: transparent;
   color: var(--text);
   border-color: var(--border2);
 }
 
-.btn-s:hover { border-color: var(--accent); color: var(--accent); }
+.btn-s:hover { border-color: var(--text); }
 .btn-s:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Ghost */
 .btn-g {
   background: transparent;
   color: var(--muted);

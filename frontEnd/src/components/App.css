@@ -2,6 +2,7 @@
   display: grid;
   grid-template-rows: 56px 1fr;
   height: 100vh;
+  background: var(--bg);
 }
 
 .main {
@@ -16,12 +17,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
 
 .report-panel {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
 
 /* cfg-strip styles moved to ReportPanel/ConfigStrip.css */

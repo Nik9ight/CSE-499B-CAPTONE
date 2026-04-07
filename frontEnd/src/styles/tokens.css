@@ -1,23 +1,52 @@
-/* ── Design tokens extracted from radiology_explainer.html ── */
+/* ── Spotify-inspired design tokens ── */
 :root {
-  --bg: #07090f;
-  --surface: #0f1420;
-  --surface2: #161d2e;
-  --border: #1e2a3f;
-  --border2: #2a3a55;
-  --text: #e8edf5;
-  --muted: #6b7fa0;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59,130,246,0.1);
-  --green: #10b981;
-  --red: #f87171;
-  --amber: #fbbf24;
-  --highlight: rgba(251,191,36,0.18);
-  --highlight-active: rgba(251,191,36,0.35);
-  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  /* Surfaces — near-black layered depth */
+  --bg:       #121212;
+  --surface:  #181818;
+  --surface2: #1f1f1f;
+  --surface3: #252525;
+
+  /* Borders */
+  --border:  #4d4d4d;
+  --border2: #7c7c7c;
+
+  /* Text */
+  --text:  #ffffff;
+  --muted: #b3b3b3;
+
+  /* Accent — Spotify Green, functional only */
+  --accent:     #1ed760;
+  --accent-dim: rgba(30, 215, 96, 0.1);
+
+  /* Semantic */
+  --green: #1ed760;
+  --red:   #f3727f;
+  --amber: #ffa42b;
+  --blue:  #539df5;
+
+  /* Sentence highlight — neutral so green stays functional */
+  --highlight:        rgba(255, 255, 255, 0.08);
+  --highlight-active: rgba(255, 255, 255, 0.14);
+
+  /* Typography */
+  --font-ui:   'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-  --radius: 10px;
-  --radius-sm: 6px;
+
+  /* Border radius scale */
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius:      6px;
+  --radius-md:   8px;
+  --radius-lg:   100px;
+  --radius-pill: 9999px;
+
+  /* Elevation shadows */
+  --shadow-card:   rgba(0, 0, 0, 0.3) 0px 8px 8px;
+  --shadow-dialog: rgba(0, 0, 0, 0.5) 0px 8px 24px;
+  --shadow-inset:  rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+
+  /* Legacy aliases — keep existing component references working */
+  --accent-dim: rgba(30, 215, 96, 0.1);
 }
 
 /* ── Global reset ── */
@@ -29,6 +58,6 @@ html, body {
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   overflow: hidden;
 }
