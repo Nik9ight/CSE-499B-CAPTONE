@@ -8,9 +8,14 @@ PROMPT = (
     "a structured radiology report in JSON format with the following schema:\n"
     '{ "modality": "<modality>", "sections": [ { "title": "<section>", '
     '"sentences": [ { "text": "<finding>", "tag": "finding" } ] } ] }\n'
-    "Include sections for Findings, Impressions, and Recommendations."
+    "The input image may be either: (1) the original raw image, or (2) an overlay "
+    "image where highlighted colored regions indicate model-segmented areas of interest. "
+    "If an overlay is present, treat the highlighted region as guidance and still evaluate "
+    "the full image context. Do not assume highlighted pixels are always pathology.\n"
+    "Include sections for Findings, Impressions, and Recommendations.\n"
+    "Return only valid JSON. Do not add markdown, code fences, or extra commentary."
 )
-res = (f"""
+dummy_res = (f"""
     Raw model response: FINDINGS:
     The image is a chest X-ray. There is a consolidation in the left lower lobe. The right lung appears clear. The heart size is normal. The mediastinum is normal. There is no pleural effusion.
 
@@ -55,6 +60,6 @@ def reportGen(input_image, model, processor):
     decoded = processor.decode(generation, skip_special_tokens=True)
 
     print("Raw model response:", decoded)
-    # print(res)
+    # print(dummy_res)
     return decoded
 
