@@ -24,37 +24,37 @@ res = (f"""
 def reportGen(input_image, model, processor):
     """Generate a radiology report from a PIL Image."""
 
-    # messages = [
-    #     {
-    #         "role": "user",
-    #         "content": [
-    #             {"type": "image"},
-    #             {"type": "text", "text": PROMPT},
-    #         ],
-    #     }
-    # ]
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image"},
+                {"type": "text", "text": PROMPT},
+            ],
+        }
+    ]
 
-    # # Step 1: format the chat prompt as a string (no tokenization)
-    # text = processor.apply_chat_template(
-    #     messages, add_generation_prompt=True, tokenize=False
-    # )
+    # Step 1: format the chat prompt as a string (no tokenization)
+    text = processor.apply_chat_template(
+        messages, add_generation_prompt=True, tokenize=False
+    )
 
-    # # Step 2: process text + image together
-    # inputs = processor(
-    #     text=text,
-    #     images=[input_image],
-    #     return_tensors="pt",
-    # ).to(model.device, dtype=torch.bfloat16)
+    # Step 2: process text + image together
+    inputs = processor(
+        text=text,
+        images=[input_image],
+        return_tensors="pt",
+    ).to(model.device, dtype=torch.bfloat16)
 
-    # input_len = inputs["input_ids"].shape[-1]
+    input_len = inputs["input_ids"].shape[-1]
 
-    # with torch.inference_mode():
-    #     generation = model.generate(**inputs, max_new_tokens=1024, do_sample=False)
-    #     generation = generation[0][input_len:]
+    with torch.inference_mode():
+        generation = model.generate(**inputs, max_new_tokens=1024, do_sample=False)
+        generation = generation[0][input_len:]
 
-    # decoded = processor.decode(generation, skip_special_tokens=True)
+    decoded = processor.decode(generation, skip_special_tokens=True)
 
-    # print("Raw model response:", decoded)
-    print(res)
-    return res
+    print("Raw model response:", decoded)
+    # print(res)
+    return decoded
 

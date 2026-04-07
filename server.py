@@ -65,18 +65,26 @@ def segment():
     return jsonify({"mask_base64": mask_b64})
 
 
-# def load_model():
-#     """Load model and processor once."""
-#     login(token="")
+def load_model():
+    """Load model and processor once."""
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token:
+        raise RuntimeError("HF_TOKEN is not set. Add it to .env or environment variables.")
 
-#     model = AutoModelForImageTextToText.from_pretrained(
-#         MODEL_ID,
-#         dtype=torch.bfloat16,
-#         device_map="cuda",
-#     )
-#     processor = AutoProcessor.from_pretrained(MODEL_ID)
-#     return model, processor
-# model, processor = load_model()
+    login(token=hf_token)
+
+    dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    device_map = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model = AutoModelForImageTextToText.from_pretrained(
+        MODEL_ID,
+        dtype=dtype,
+        device_map=device_map,
+    )
+    processor = AutoProcessor.from_pretrained(MODEL_ID)
+    return model, processor
+model, processor = load_model()
+
 @app.route("/report", methods=["POST"])
 def generate_report():
     data = request.get_json(force=True)
@@ -87,8 +95,8 @@ def generate_report():
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {e}"}), 400
-    model= "None"
-    processor = "None"
+    # model= "None"
+    # processor = "None"
     report = reportGen(img, model, processor)
     return jsonify({"report": report})
 
