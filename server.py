@@ -43,6 +43,10 @@ DEBUG = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
 app = Flask(__name__)
 CORS(app)  # Required so the browser can call this from the HTML file
 
+@app.route("/hello", methods=["GET"])
+def hello():
+    return "Hello from RadVision backend!"
+
 
 @app.route("/segment", methods=["POST"])
 def segment():
@@ -65,6 +69,8 @@ def segment():
     return jsonify({"mask_base64": mask_b64})
 
 
+model= "None"
+processor = "None"
 def load_model():
     """Load model and processor once."""
     hf_token = os.environ.get("HF_TOKEN")
@@ -95,8 +101,6 @@ def generate_report():
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {e}"}), 400
-    # model= "None"
-    # processor = "None"
     report = reportGen(img, model, processor)
     return jsonify({"report": report})
 
@@ -104,7 +108,7 @@ def generate_report():
 def explainSentence():
     data = request.get_json(force=True)
     sentence = data.get("sentenceText", "")
-    response = explain(sentence)
+    response = explain(sentence, model, processor)
     return jsonify({"explanation": response})
 
 if __name__ == "__main__":

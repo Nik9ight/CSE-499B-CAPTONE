@@ -28,7 +28,7 @@ dummy_res = (f"""
 )
 def reportGen(input_image, model, processor):
     """Generate a radiology report from a PIL Image."""
-
+    decoded = None
     messages = [
         {
             "role": "user",
@@ -59,7 +59,9 @@ def reportGen(input_image, model, processor):
 
     decoded = processor.decode(generation, skip_special_tokens=True)
 
-    print("Raw model response:", decoded)
+    # print("Raw model response:", decoded)
     # print(dummy_res)
+    if decoded is None:
+        return dummy_res
     return decoded
 
