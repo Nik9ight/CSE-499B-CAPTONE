@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import './LandingPage.css';
 
 // Import preset images
-import img1 from '../../assets/1.png';
-import img2 from '../../assets/2.png';
-import img3 from '../../assets/3.jpg';
-import img4 from '../../assets/4.jpg';
-import img5 from '../../assets/5.png';
-import img6 from '../../assets/6.png';
+import img1 from '../../assets/preset_1.png';
+import img2 from '../../assets/preset_2.png';
+import img3 from '../../assets/preset_3.jpg';
+import img4 from '../../assets/preset_4.jpg';
+import img5 from '../../assets/preset_5.png';
+import img6 from '../../assets/preset_6.png';
 
 // ---------- Icon system (inline SVG, Lucide-style) ----------
 const Icon = ({ name, size = 22, stroke = 1.6 }) => {

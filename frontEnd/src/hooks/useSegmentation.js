@@ -20,7 +20,8 @@ export function useSegmentation() {
 
       try {
         const base = config.endpoint.replace(/\/+$/, '');
-        const url = `${base}/segment?modality=${encodeURIComponent(config.activeType)}`;
+        const filename = appState.file?.name || 'image.png';
+        const url = `${base}/segment?modality=${encodeURIComponent(config.activeType)}&image_filename=${encodeURIComponent(filename)}`;
         const resp = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -56,7 +57,7 @@ export function useSegmentation() {
         setIsLoading(false);
       }
     },
-    [appState.dataUrl, config, setAppState],
+    [appState.dataUrl, appState.file, config, setAppState],
   );
 
   return { runSegmentation, isLoading };

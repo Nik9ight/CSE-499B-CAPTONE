@@ -52,6 +52,8 @@ def hello():
 def segment():
     """Route that reads modality from query param, e.g. ?modality=chest_xray"""
     modality = request.args.get("modality", "chest_xray")  # defaults to chest_xray if not provided
+    image_filename = request.args.get("image_filename", "uploaded_image.png")  # optional filename for logging
+    print(f"Received segmentation request for modality '{modality}' with image filename '{image_filename}'")
     data = request.get_json(force=True)
     if not data or "image_base64" not in data:
         return jsonify({"error": "Missing image_base64 field"}), 400
@@ -60,7 +62,6 @@ def segment():
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {e}"}), 400
-    print(f"Received image for modality '{modality}'")
     mask_img = test_model(img, modality=modality)
 
     buf = io.BytesIO()
