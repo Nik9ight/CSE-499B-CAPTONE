@@ -71,25 +71,25 @@ def segment():
 
 model= "None"
 processor = "None"
-def load_model():
-    """Load model and processor once."""
-    hf_token = os.environ.get("HF_TOKEN")
-    if not hf_token:
-        raise RuntimeError("HF_TOKEN is not set. Add it to .env or environment variables.")
+# def load_model():
+#     """Load model and processor once."""
+#     hf_token = os.environ.get("HF_TOKEN")
+#     if not hf_token:
+#         raise RuntimeError("HF_TOKEN is not set. Add it to .env or environment variables.")
 
-    login(token=hf_token)
+#     login(token=hf_token)
 
-    dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
-    device_map = "cuda" if torch.cuda.is_available() else "cpu"
+#     dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+#     device_map = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = AutoModelForImageTextToText.from_pretrained(
-        MODEL_ID,
-        dtype=dtype,
-        device_map=device_map,
-    )
-    processor = AutoProcessor.from_pretrained(MODEL_ID)
-    return model, processor
-model, processor = load_model()
+#     model = AutoModelForImageTextToText.from_pretrained(
+#         MODEL_ID,
+#         dtype=dtype,
+#         device_map=device_map,
+#     )
+#     processor = AutoProcessor.from_pretrained(MODEL_ID)
+#     return model, processor
+# model, processor = load_model()
 
 @app.route("/report", methods=["POST"])
 def generate_report():

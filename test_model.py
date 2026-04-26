@@ -89,7 +89,8 @@ def test_model(input_image, text=None, modality="chest_xray"):
 
     with torch.no_grad():
         if text is None:
-            text = "Bilateral pulmonary infection, two infected areas, lower left lung and middle lower right lung."
+            text = "Bilateral pulmonary infection, two infected areas, all left lung and middle right lung."
+            # text = "Unilateral pulmonary infection, one infected areas, middle left lung."
             text_tensor = text_to_tensor(text)
         else:
             text_tensor = text_to_tensor(text)
