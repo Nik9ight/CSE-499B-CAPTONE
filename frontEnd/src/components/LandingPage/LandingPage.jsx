@@ -3,6 +3,7 @@ import './LandingPage.css';
 
 // Import preset images
 import img1 from '../../assets/preset_1.png';
+import mask1 from '../../assets/mask_preset_1.png';
 import img2 from '../../assets/preset_2.png';
 import img3 from '../../assets/preset_3.jpg';
 import img4 from '../../assets/preset_4.jpg';
@@ -227,15 +228,15 @@ const Hero = ({ onGetStarted }) => (
         </div>
         <div className="hero-meta">
           <div className="item">
-            <div className="num">12</div>
+            <div className="num">6</div>
             <div className="lbl">Modalities</div>
           </div>
           <div className="item">
-            <div className="num">&lt; 4s</div>
+            <div className="num">&lt; 10s</div>
             <div className="lbl">Avg. Inference</div>
           </div>
           <div className="item">
-            <div className="num">98.4%</div>
+            <div className="num">88.4%</div>
             <div className="lbl">Dice Score</div>
           </div>
         </div>
@@ -253,12 +254,12 @@ const Hero = ({ onGetStarted }) => (
         </div>
         <div className="demo-stage">
           <div className="demo-half left">
-            <BrainScan segmented={false} />
+            <img src={img1} alt="Original" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div className="demo-label-mini">Original</div>
           </div>
           <div className="demo-divider"></div>
           <div className="demo-half right">
-            <BrainScan segmented={true} />
+            <img src={mask1} alt="Segmented" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div className="demo-label-mini">Segmented</div>
           </div>
         </div>
@@ -493,12 +494,12 @@ const Presets = ({ onSelectPreset }) => {
   const ref = useRef(null);
   useReveal(ref);
   const items = [
-    { key: 'brain',   label: 'Brain MRI',    tag: 'MRI',   id: 'RV-001', img: img1 },
-    { key: 'chest',   label: 'Chest X-Ray',  tag: 'X-Ray', id: 'RV-002', img: img2 },
-    { key: 'eye',     label: 'Retinal Scan', tag: 'OCT',   id: 'RV-003', img: img3 },
-    { key: 'abdomen', label: 'CT Abdomen',   tag: 'CT',    id: 'RV-004', img: img4 },
-    { key: 'lung',    label: 'Lung CT',      tag: 'CT',    id: 'RV-005', img: img5 },
-    { key: 'heart',   label: 'Cardiac MRI',  tag: 'MRI',   id: 'RV-006', img: img6 },
+    { key: 'brain',   label: 'Brain MRI',    tag: 'MRI',   id: 'RV-001', img: img1, filename: 'preset_1.png' },
+    { key: 'chest',   label: 'Chest X-Ray',  tag: 'X-Ray', id: 'RV-002', img: img2, filename: 'preset_2.png' },
+    { key: 'eye',     label: 'Gastrointestinal Endoscopy', tag: 'OCT',   id: 'RV-003', img: img3, filename: 'preset_3.jpg' },
+    { key: 'abdomen', label: 'Skin Microscopy',   tag: 'CT',    id: 'RV-004', img: img4, filename: 'preset_4.jpg' },
+    { key: 'lung',    label: 'Lung CT',      tag: 'CT',    id: 'RV-005', img: img5, filename: 'preset_5.png' },
+    { key: 'heart',   label: 'Breast Ultrasonogram',  tag: 'MRI',   id: 'RV-006', img: img6, filename: 'preset_6.png' },
   ];
   return (
     <section id="presets" ref={ref}>
@@ -514,7 +515,7 @@ const Presets = ({ onSelectPreset }) => {
         <div className="preset-grid">
           {items.map((p) => (
             <div className="preset reveal" key={p.key}
-                 onClick={() => onSelectPreset(p.img, p.label)}>
+                 onClick={() => onSelectPreset(p.img, p.filename)}>
               <div className="preset-id">{p.id}</div>
               <div className="preset-image">
                 <img src={p.img} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

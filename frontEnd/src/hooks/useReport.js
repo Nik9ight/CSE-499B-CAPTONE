@@ -82,7 +82,7 @@ function parseReport(raw) {
 }
 
 export function useReport() {
-  const { config } = useAppContext();
+  const { config, appState } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
@@ -93,9 +93,11 @@ export function useReport() {
     setReport(null);
     setStatus({ type: 'ld', message: 'Generating report\u2026' });
 
-    const base = (config.endpoint || 'http://localhost:5000').replace(/\/+$/, '');
+    const base = config.endpoint.replace(/\/+$/, '');
+    const filename = appState.file?.name || 'image.png';
+    const url = `${base}/report?modality=${encodeURIComponent(config.activeType)}&image_filename=${encodeURIComponent(filename)}`;
     try {
-      const resp = await fetch(`${base}/report`, {
+      const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_base64: imageBase64 }),
@@ -116,7 +118,7 @@ export function useReport() {
     } finally {
       setIsLoading(false);
     }
-  }, [config.endpoint]);
+  }, [config, appState.file]);
 
   const clearReport = useCallback(() => {
     setReport(null);

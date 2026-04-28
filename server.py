@@ -43,6 +43,14 @@ DEBUG = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
 app = Flask(__name__)
 CORS(app)  # Required so the browser can call this from the HTML file
 
+def segmentation_presets(image_filename):
+    if not image_filename:
+        return None
+    maskname = "mask_" + image_filename
+    mask_path = os.path.join("./models/assets/", maskname)
+    if os.path.exists(mask_path):
+        return Image.open(mask_path).convert("RGB")
+
 @app.route("/hello", methods=["GET"])
 def hello():
     return "Hello from RadVision backend!"
@@ -54,6 +62,25 @@ def segment():
     modality = request.args.get("modality", "chest_xray")  # defaults to chest_xray if not provided
     image_filename = request.args.get("image_filename", "uploaded_image.png")  # optional filename for logging
     print(f"Received segmentation request for modality '{modality}' with image filename '{image_filename}'")
+    if image_filename and image_filename.startswith("preset_"):
+        print("its a preset image!")
+        preset_mask =  segmentation_presets(image_filename)
+        if preset_mask:
+            buf = io.BytesIO()
+            preset_mask.save(buf, format="PNG")
+            mask_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+            return jsonify({"mask_base64": mask_b64})
+    if image_filename and modality:
+        maskname = "mask_" + image_filename 
+        mask_path = os.path.join("models", modality, maskname)
+        print(f"Looking for existing mask at '{mask_path}'...")
+        if os.path.exists(mask_path):
+            print(f"Found existing mask at '{mask_path}'. Returning it without inference.")
+            mask_img = Image.open(mask_path).convert("RGB")
+            buf = io.BytesIO()
+            mask_img.save(buf, format="PNG")
+            mask_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+            return jsonify({"mask_base64": mask_b64})
     data = request.get_json(force=True)
     if not data or "image_base64" not in data:
         return jsonify({"error": "Missing image_base64 field"}), 400
@@ -102,6 +129,28 @@ def generate_report():
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {e}"}), 400
+    image_filename = request.args.get("image_filename", "uploaded_image.png")  # optional filename for logging
+    if image_filename and image_filename.startswith("preset_"):
+        print("its a preset image!")
+        # Look for a matching .txt report file in ./models/assets/
+        base = os.path.splitext(image_filename)[0]
+        candidate_paths = [
+            os.path.join("./models/assets", base + ".txt"),
+            os.path.join("./models/assets", image_filename + ".txt"),
+            os.path.join("./models/assets", image_filename),
+        ]
+        report = None
+        for p in candidate_paths:
+            if os.path.exists(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        report = f.read()
+                except Exception as e:
+                    report = f"Could not read preset report file: {e}"
+                break
+        if report is None:
+            report = "Preset report not found."
+        return jsonify({"report": report})
     report = reportGen(img, model, processor)
     return jsonify({"report": report})
 

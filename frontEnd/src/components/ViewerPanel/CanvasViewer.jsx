@@ -82,8 +82,8 @@ export default function CanvasViewer({ activeView, opacity }) {
     activeView === 'over';
   const showMask = activeView === 'mask' && appState.hasMask;
   const showOver = activeView === 'over' && appState.hasMask;
-  const showLegend = (activeView === 'mask' || activeView === 'over') && appState.hasMask;
-
+  var showLegend = (activeView === 'mask' || activeView === 'over') && appState.hasMask;
+  showLegend = false; // Disable legend for now, as it doesn't add much value and takes up space
   return (
     <div className="canvas-wrap" ref={wrapRef}>
       <canvas ref={origRef} style={{ display: showOrig ? 'block' : 'none' }} />
