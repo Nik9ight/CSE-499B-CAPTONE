@@ -7,13 +7,11 @@
 
 .main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   overflow: hidden;
   height: calc(100vh - 56px);
 }
 
 .viewer-panel {
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -25,6 +23,19 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
+}
+
+.resize-divider {
+  width: 4px;
+  cursor: col-resize;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.resize-divider:hover,
+.resize-divider:active {
+  background: var(--accent, #6b7280);
 }
 
 /* cfg-strip styles moved to ReportPanel/ConfigStrip.css */
