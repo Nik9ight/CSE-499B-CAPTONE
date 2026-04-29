@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from './context/AppContext';
 import { useReport } from './hooks/useReport';
+import { usePanelResize } from './hooks/usePanelResize';
 import Header from './components/Header';
 import ConfigDrawer from './components/ConfigDrawer';
 import ViewerPanel from './components/ViewerPanel/ViewerPanel';
@@ -14,6 +15,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [status, setStatus] = useState({ type: '', message: 'Ready \u2014 open CONFIG to set up' });
   const { fetchReport, generateReport, clearReport, isLoading: reportLoading, report, error: reportError, prefetchedReport } = useReport();
+  const { splitPct, dividerProps } = usePanelResize('panelSplit', 50, 20);
   const [shouldShowReport, setShouldShowReport] = useState(false);
 
   useEffect(() => {
@@ -98,10 +100,14 @@ export default function App() {
       <Header onToggleDrawer={() => setDrawerOpen(prev => !prev)} />
       <ConfigDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      <div className="main">
+      <div
+        className="main"
+        style={{ gridTemplateColumns: `${splitPct}fr 4px ${100 - splitPct}fr` }}
+      >
         <div className="viewer-panel">
           <ViewerPanel setStatus={setStatus} onGenerateReport={handleGenerateReport} />
         </div>
+        <div className="resize-divider" {...dividerProps} />
         <div className="report-panel">
           <ReportPanel
             report={report}
