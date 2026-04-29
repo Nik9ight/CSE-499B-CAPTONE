@@ -29,7 +29,6 @@
   width: 4px;
   cursor: col-resize;
   background: var(--border);
-  flex-shrink: 0;
   transition: background 0.15s;
 }
 
