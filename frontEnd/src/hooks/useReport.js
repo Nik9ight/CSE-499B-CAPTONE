@@ -85,13 +85,13 @@ export function useReport() {
   const { config, appState } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
   const [report, setReport] = useState(null);
+  const [prefetchedReport, setPrefetchedReport] = useState(null);
   const [error, setError] = useState(null);
 
-  const generateReport = useCallback(async (imageBase64, setStatus) => {
+  const fetchReport = useCallback(async (imageBase64) => {
     setIsLoading(true);
     setError(null);
-    setReport(null);
-    setStatus({ type: 'ld', message: 'Generating report\u2026' });
+    setPrefetchedReport(null);
 
     const base = config.endpoint.replace(/\/+$/, '');
     const filename = appState.file?.name || 'image.png';
@@ -108,22 +108,46 @@ export function useReport() {
       if (!data.report) throw new Error('Response missing "report" field');
 
       const parsed = parseReport(data.report);
-      setReport(parsed);
-      setStatus({ type: 'ok', message: 'Report generated \u2014 click any sentence for explanation' });
-      return true;
+      setPrefetchedReport(parsed);
+      return parsed;
     } catch (err) {
       setError(err.message);
-      setStatus({ type: 'er', message: 'Report generation failed: ' + err.message });
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }
   }, [config, appState.file]);
 
+  const generateReport = useCallback((setStatus) => {
+    if (prefetchedReport) {
+      setReport(prefetchedReport);
+      setStatus({ type: 'ok', message: 'Report generated \u2014 click any sentence for explanation' });
+      return true;
+    }
+    
+    if (isLoading) {
+      setStatus({ type: 'ld', message: 'Generating report\u2026' });
+      // We need a way to wait for the loading to finish and then show it.
+      // For simplicity, we can just poll or use a more complex state.
+      // However, if we are already loading, we can just wait for prefetchedReport to be set.
+      // But generateReport is called once on click.
+      return 'loading';
+    }
+
+    if (error) {
+      setStatus({ type: 'er', message: 'Report generation failed: ' + error });
+      return false;
+    }
+
+    setStatus({ type: 'er', message: 'No report available. Please wait or re-upload.' });
+    return false;
+  }, [prefetchedReport, isLoading, error]);
+
   const clearReport = useCallback(() => {
     setReport(null);
+    setPrefetchedReport(null);
     setError(null);
   }, []);
 
-  return { generateReport, clearReport, isLoading, report, error };
+  return { fetchReport, generateReport, clearReport, isLoading, report, error, prefetchedReport };
 }
