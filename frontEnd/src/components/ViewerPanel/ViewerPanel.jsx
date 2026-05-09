@@ -35,7 +35,7 @@ export default function ViewerPanel({ setStatus, onGenerateReport }) {
 
   const handleRunSeg = async () => {
     const success = await runSegmentation(setStatus);
-    if (success) setActiveView('mask');
+    if (success) setActiveView('over');
   };
 
   const showOpacity = activeView === 'over' && appState.hasMask;

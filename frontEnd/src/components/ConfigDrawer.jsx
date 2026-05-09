@@ -15,8 +15,7 @@ const PRECODED_TYPES = [
   { id: 'chest_xray', label: 'Chest X-ray' },
   { id: 'lung_ct', label: 'Lung CT' },
   { id: 'brain_mri', label: 'Brain MRI' },
-  { id: 'breast_us', label: 'Breast Ultrasound' },
-  { id: 'ployp', label: 'Endoscopy' },
+  { id: 'breast_us', label: 'Breast Ultrasound' }
 ];
 
 export default function ConfigDrawer({ open, onClose }) {
